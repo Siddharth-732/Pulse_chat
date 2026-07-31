@@ -31,12 +31,14 @@ export interface AuthUser {
 interface AuthState {
   authUser: AuthUser | null;
   isLoggingIn: boolean;
+  isCheckingAuth: boolean;
   isRegistering: boolean;
   isUpdatingProfile: boolean;
   socket: Socket | null;
   onlineUsers: string[];
   login: (data: Record<string, unknown> | FormData) => Promise<boolean>;
   googleAuth: (credential: string) => Promise<boolean>;
+  checkAuth: () => Promise<void>;
   register: (data: Record<string, unknown> | FormData) => Promise<void>;
   logout: () => Promise<void>;
   connectSocket: () => void;
@@ -60,6 +62,7 @@ interface AuthState {
 export const useAuthStore = create<AuthState>((set, get) => ({
   authUser: null, // Holds the user's data when logged in
   isLoggingIn: false,
+  isCheckingAuth: true, // true by default since we check on load
   isRegistering: false,
   isUpdatingProfile: false,
   onlineUsers: [],
@@ -115,6 +118,18 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       return false;
     } finally {
       set({ isLoggingIn: false });
+    }
+  },
+
+  checkAuth: async () => {
+    try {
+      const res = await axiosInstance.get("/users/me");
+      set({ authUser: res.data.data });
+      get().connectSocket();
+    } catch (error) {
+      set({ authUser: null });
+    } finally {
+      set({ isCheckingAuth: false });
     }
   },
 
