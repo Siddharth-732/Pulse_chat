@@ -8,8 +8,8 @@ import GoogleAuthProvider from "../components/GoogleAuthProvider";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Talk8iv",
-  description: "Real-time chat application",
+  title: "Bind",
+  description: "Student Social Platform",
 };
 
 const themeBootstrapScript = `

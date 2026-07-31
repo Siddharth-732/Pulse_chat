@@ -20,10 +20,12 @@ import {
   getPeerRequests,
   getUserProfile,
   googleAuth,
+  getCurrentUser,
 } from "../controllers/user.controllers.js";
 import { upload } from "../middleware/multer.middleware.js";
 import { verifyJWT } from "../middleware/auth.middleware.js";
 const router = Router();
+router.route("/me").get(verifyJWT, getCurrentUser);
 router.route("/send-otp").post(sendOTP);
 router.route("/verify-otp").post(verifyOTP);
 router.route("/check-username").get(checkUsername);
