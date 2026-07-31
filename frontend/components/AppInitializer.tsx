@@ -6,15 +6,11 @@ import { useLodgeStore } from "../store/useLodgeStore";
 import { useStatusStore } from "../store/useStatusStore";
 
 export default function AppInitializer() {
-  const { authUser, checkAuth, connectSocket, disconnectSocket } = useAuthStore();
+  const { authUser, connectSocket, disconnectSocket } = useAuthStore();
   const { getPeers, getPeerRequests, getSuggestedPeers } = usePeerStore();
   const { getPublicLodges, getMyLodges } = useLodgeStore();
   const { getStatuses, subscribeToStatuses, unsubscribeFromStatuses } =
     useStatusStore();
-
-  useEffect(() => {
-    checkAuth();
-  }, [checkAuth]);
 
   useEffect(() => {
     if (authUser) {

@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { persist } from "zustand/middleware";
 import { axiosInstance, BASE_URL } from "../lib/axios";
 import toast from "react-hot-toast";
 import { io, Socket } from "socket.io-client";
@@ -38,7 +39,6 @@ interface AuthState {
   onlineUsers: string[];
   login: (data: Record<string, unknown> | FormData) => Promise<boolean>;
   googleAuth: (credential: string) => Promise<boolean>;
-  checkAuth: () => Promise<void>;
   register: (data: Record<string, unknown> | FormData) => Promise<void>;
   logout: () => Promise<void>;
   connectSocket: () => void;
@@ -59,13 +59,15 @@ interface AuthState {
   updateUserBanner: (file: File) => Promise<boolean>;
 }
 
-export const useAuthStore = create<AuthState>((set, get) => ({
-  authUser: null, // Holds the user's data when logged in
-  isLoggingIn: false,
-  isCheckingAuth: true, // true by default since we check on load
-  isRegistering: false,
-  isUpdatingProfile: false,
-  onlineUsers: [],
+export const useAuthStore = create<AuthState>()(
+  persist(
+    (set, get) => ({
+      authUser: null,
+      isLoggingIn: false,
+      isCheckingAuth: false, // We don't need a loading spinner if it's persisted instantly
+      isRegistering: false,
+      isUpdatingProfile: false,
+      onlineUsers: [],
 
   login: async (data) => {
     set({ isLoggingIn: true });
@@ -118,18 +120,6 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       return false;
     } finally {
       set({ isLoggingIn: false });
-    }
-  },
-
-  checkAuth: async () => {
-    try {
-      const res = await axiosInstance.get("/users/me");
-      set({ authUser: res.data.data });
-      get().connectSocket();
-    } catch (error) {
-      set({ authUser: null });
-    } finally {
-      set({ isCheckingAuth: false });
     }
   },
 
@@ -252,12 +242,17 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     });
   },
 
-  disconnectSocket: () => {
-    const { socket } = get();
-    if (socket?.connected) {
-      socket.disconnect();
-      set({ socket: null, onlineUsers: [] });
-      console.log("🔌 Socket disconnected!");
-    }
-  },
-}));
+    disconnectSocket: () => {
+      const { socket } = get();
+      if (socket?.connected) {
+        socket.disconnect();
+        set({ socket: null, onlineUsers: [] });
+        console.log("🔌 Socket disconnected!");
+      }
+    },
+  }),
+  {
+    name: "bind-auth-storage", // name of item in the storage (must be unique)
+    partialize: (state) => ({ authUser: state.authUser }), // only persist authUser
+  }
+));
